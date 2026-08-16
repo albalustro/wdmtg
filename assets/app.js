@@ -27,7 +27,7 @@
 
   // Used for branding on the share card and in captions when the site is opened
   // from the file system rather than served over http(s).
-  var FALLBACK_DOMAIN = 'where-did-my-time-go.com';
+  var FALLBACK_DOMAIN = 'wdmtg.site';
 
   /* ------------------------------------------------------------------ *
    * Analytics seam — inert on purpose.

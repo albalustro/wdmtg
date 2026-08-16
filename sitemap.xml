@@ -3,30 +3,30 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
   <url>
-    <loc>https://where-did-my-time-go.com/</loc>
+    <loc>https://wdmtg.site/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://where-did-my-time-go.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://where-did-my-time-go.com/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://where-did-my-time-go.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wdmtg.site/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://wdmtg.site/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wdmtg.site/"/>
   </url>
 
   <url>
-    <loc>https://where-did-my-time-go.com/en/</loc>
+    <loc>https://wdmtg.site/en/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://where-did-my-time-go.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://where-did-my-time-go.com/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://where-did-my-time-go.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wdmtg.site/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://wdmtg.site/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wdmtg.site/"/>
   </url>
 
   <url>
-    <loc>https://where-did-my-time-go.com/pt-br/</loc>
+    <loc>https://wdmtg.site/pt-br/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://where-did-my-time-go.com/en/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://where-did-my-time-go.com/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://where-did-my-time-go.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://wdmtg.site/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://wdmtg.site/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://wdmtg.site/"/>
   </url>
 
 </urlset>
