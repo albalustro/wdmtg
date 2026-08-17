@@ -93,6 +93,9 @@
       step1Title: 'How old are you?',
       step1Help: 'Everything below is measured against the time you have already lived.',
       ageLabel: 'Age',
+      birthDateToggle: 'I know my exact date of birth',
+      birthDateLabel: 'Date of birth',
+      birthDateHelp: 'With the exact date, the days and hours below are counted, not estimated.',
       step2Title: 'Where does a normal day go?',
       step2Help: 'Rough averages are fine. Leave anything that does not apply to you empty.',
       panelDone: 'Continue',
@@ -160,6 +163,7 @@
       startOver: 'Start over',
       resultTitle: "You've been alive for {age} years.",
       resultSub: "That's about:",
+      resultSubExact: "That's exactly:",
       resultDays: 'days',
       resultHours: 'hours',
       lifeBarTitle: 'Your life so far',
@@ -206,6 +210,8 @@
       errors: {
         ageRequired: 'Enter your age to continue.',
         ageRange: 'Your age has to be between 13 and 100.',
+        birthDateInvalid: 'Enter a valid date.',
+        birthDateFuture: "That date hasn't happened yet.",
         number: 'Enter a number.',
         negative: "This can't be a negative number.",
         sleepRequired: 'Enter how many hours you usually sleep.',
@@ -232,6 +238,9 @@
       step1Title: 'Quantos anos você tem?',
       step1Help: 'Tudo o que vem depois é medido contra o tempo que você já viveu.',
       ageLabel: 'Idade',
+      birthDateToggle: 'Sei minha data de nascimento exata',
+      birthDateLabel: 'Data de nascimento',
+      birthDateHelp: 'Com a data exata, os dias e as horas abaixo passam a ser contados, e não estimados.',
       step2Title: 'Para onde vai um dia normal?',
       step2Help: 'Médias aproximadas já servem. Deixe em branco o que não se aplica a você.',
       panelDone: 'Continuar',
@@ -299,6 +308,7 @@
       startOver: 'Começar de novo',
       resultTitle: 'Você já viveu {age} anos.',
       resultSub: 'Isso representa aproximadamente:',
+      resultSubExact: 'Isso representa exatamente:',
       resultDays: 'dias',
       resultHours: 'horas',
       lifeBarTitle: 'Sua vida até aqui',
@@ -345,6 +355,8 @@
       errors: {
         ageRequired: 'Informe sua idade para continuar.',
         ageRange: 'A idade precisa estar entre 13 e 100.',
+        birthDateInvalid: 'Digite uma data válida.',
+        birthDateFuture: 'Essa data ainda não aconteceu.',
         number: 'Digite um número.',
         negative: 'Este valor não pode ser negativo.',
         sleepRequired: 'Informe quantas horas você costuma dormir.',
@@ -491,6 +503,14 @@
       .replace(/'/g, '&#39;');
   }
 
+  /** Today as yyyy-mm-dd in local time, for the date input's max attribute. */
+  function todayISO() {
+    var now = new Date();
+    return now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+  }
+
   function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
@@ -542,6 +562,7 @@
 
   var state = {
     age: null,
+    birthDate: null, // Date at local midnight, only when the visitor gave one
     sleepHoursPerDay: null,
     work: { years: null, hoursPerWeek: null, weeksPerYear: DEFAULT_WORK_WEEKS_PER_YEAR },
     commute: { years: null, minutesRoundTrip: null, daysPerWeek: 5 },
@@ -561,6 +582,39 @@
 
   function lifetimeHours(age) {
     return age * DAYS_PER_YEAR * 24;
+  }
+
+  /**
+   * Parse a yyyy-mm-dd value into local midnight. Built field by field rather
+   * than with new Date(string), which parses that form as UTC and can land on
+   * the wrong day west of Greenwich.
+   */
+  function parseBirthDate(value) {
+    var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return null;
+    var year = Number(match[1]);
+    var month = Number(match[2]);
+    var day = Number(match[3]);
+    var date = new Date(year, month - 1, day);
+    // Rejects impossible dates such as 31 February, which JS would roll over.
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    return date;
+  }
+
+  /** Exact days lived, including the part of today that has already passed. */
+  function daysSince(birthDate, now) {
+    return ((now || new Date()) - birthDate) / 86400000;
+  }
+
+  /** Whole years completed — the age a person would say out loud. */
+  function ageOnDate(birthDate, now) {
+    var today = now || new Date();
+    var years = today.getFullYear() - birthDate.getFullYear();
+    var monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) years -= 1;
+    return years;
   }
 
   function sleepHours(age, hoursPerDay) {
@@ -610,7 +664,12 @@
   /** Everything the result page and the share cards need. */
   function computeResults() {
     var age = num(state.age);
-    var total = lifetimeHours(age);
+    // A known birth date turns the headline figures from an estimate into a
+    // count; without one we fall back to the average-length year.
+    var exact = !!state.birthDate;
+    var daysAlive = exact ? daysSince(state.birthDate) : age * DAYS_PER_YEAR;
+    var exactAgeYears = exact ? daysAlive / DAYS_PER_YEAR : age;
+    var total = daysAlive * 24;
 
     var categories = [];
 
@@ -638,7 +697,7 @@
 
     m = CATEGORY_META.sleep;
     push('sleep', 'sleep', t.categories.sleep, m.emoji, m.color, m.pattern,
-      sleepHours(age, num(state.sleepHoursPerDay)),
+      daysAlive * num(state.sleepHoursPerDay),
       { hoursPerDay: num(state.sleepHoursPerDay) });
 
     m = CATEGORY_META.work;
@@ -679,8 +738,10 @@
 
     return {
       age: age,
+      exactAgeYears: exactAgeYears,
+      exact: exact,
       lifetimeHours: total,
-      lifetimeDays: age * DAYS_PER_YEAR,
+      lifetimeDays: daysAlive,
       sleepHoursPerDay: num(state.sleepHoursPerDay),
       categories: categories,
       accountedHours: accounted,
@@ -706,7 +767,7 @@
   function computeReclaim(results) {
     var targetAge = num(state.reclaim.targetAge);
     var minutes = num(state.reclaim.minutesPerDay);
-    var remainingYears = targetAge - results.age;
+    var remainingYears = targetAge - (results.exact ? results.exactAgeYears : results.age);
     if (remainingYears <= 0 || minutes <= 0) return null;
 
     var reductionHoursPerDay = minutes / 60;
@@ -852,6 +913,31 @@
 
   function validateStep1() {
     clearErrors();
+
+    // A birth date, when given, is the better answer and wins over the age box.
+    var birthInput = $('#birthdate');
+    var birthRaw = birthInput ? String(birthInput.value).trim() : '';
+    if (birthRaw) {
+      var birthDate = parseBirthDate(birthRaw);
+      if (!birthDate) {
+        setError('birthdate', t.errors.birthDateInvalid);
+      } else if (birthDate > new Date()) {
+        setError('birthdate', t.errors.birthDateFuture);
+      } else {
+        var derived = ageOnDate(birthDate);
+        if (derived < MIN_AGE || derived > MAX_AGE) {
+          setError('birthdate', t.errors.ageRange);
+        } else {
+          state.birthDate = birthDate;
+          state.age = derived;
+          if ($('#age')) $('#age').value = derived;
+        }
+      }
+      paintErrors();
+      return !firstErrorId();
+    }
+
+    state.birthDate = null;
     var input = $('#age');
     var value = readNumber(input);
 
@@ -1027,6 +1113,16 @@
         placeholder: '46'
       }) +
       '</div>' +
+      '<button type="button" class="link-toggle" id="birthdate-toggle" ' +
+      'aria-expanded="false" aria-controls="birthdate-field">' + esc(t.birthDateToggle) + '</button>' +
+      '<div class="birthdate-field" id="birthdate-field" hidden>' +
+      '<div class="field">' +
+      '<label for="birthdate">' + esc(t.birthDateLabel) + '</label>' +
+      '<input id="birthdate" name="birthdate" type="date" max="' + todayISO() + '" ' +
+      'aria-describedby="birthdate-help">' +
+      '<p class="field-help" id="birthdate-help">' + esc(t.birthDateHelp) + '</p>' +
+      '<p class="field-error" data-error="birthdate" id="birthdate-error" hidden></p>' +
+      '</div></div>' +
       '<div class="step-actions">' +
       '<button type="button" class="btn btn-primary" data-action="to-step-2">' + esc(t.continue) + '</button>' +
       '</div>' +
@@ -1309,6 +1405,43 @@
       }
     });
 
+    var birthToggle = $('#birthdate-toggle');
+    var birthWrap = $('#birthdate-field');
+    if (birthToggle && birthWrap) {
+      birthToggle.addEventListener('click', function () {
+        var open = !birthWrap.hidden;
+        birthWrap.hidden = open;
+        birthToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (open) {
+          // Collapsing discards the date, so the age box is the answer again.
+          var field = $('#birthdate');
+          if (field) field.value = '';
+          state.birthDate = null;
+        } else {
+          var input = $('#birthdate');
+          if (input) input.focus();
+        }
+      });
+    }
+
+    root.addEventListener('input', function (event) {
+      var target = event.target;
+      if (!target) return;
+      if (target.id === 'birthdate') {
+        // Keep the age box in step with the date the visitor picked.
+        var parsed = parseBirthDate(target.value);
+        var ageInput = $('#age');
+        if (parsed && parsed <= new Date() && ageInput) ageInput.value = ageOnDate(parsed);
+      } else if (target.id === 'age') {
+        // Typing an age by hand means the exact date is no longer the answer.
+        var birthField = $('#birthdate');
+        if (birthField && birthField.value) {
+          birthField.value = '';
+          state.birthDate = null;
+        }
+      }
+    });
+
     var addBtn = $('#add-activity');
     var picker = $('#activity-picker');
     if (addBtn && picker) {
@@ -1577,7 +1710,7 @@
       '<section class="result-hero" data-reveal>' +
       '<h2 class="result-hero-title" id="result-title">' +
       esc(template(t.resultTitle, { age: fmtInt(data.age) })) + '</h2>' +
-      '<p class="result-hero-sub">' + esc(t.resultSub) + '</p>' +
+      '<p class="result-hero-sub">' + esc(data.exact ? t.resultSubExact : t.resultSub) + '</p>' +
       '<dl class="bignums">' +
       '<div class="bignum"><dd class="bignum-value" id="bignum-days">0</dd>' +
       '<dt class="bignum-label">' + esc(t.resultDays) + '</dt></div>' +

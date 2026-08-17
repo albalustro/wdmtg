@@ -545,6 +545,33 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
+.link-toggle {
+  display: inline-block;
+  margin: -0.35rem 0 0;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.92rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+}
+
+.link-toggle:hover {
+  color: var(--paper);
+}
+
+.link-toggle[aria-expanded="true"] {
+  color: var(--paper);
+}
+
+.birthdate-field {
+  max-width: 18rem;
+  margin-top: 0.9rem;
+}
+
 .form-status {
   min-height: 1.4rem;
   color: #ff9a9a;
